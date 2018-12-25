@@ -14,7 +14,7 @@ Fluorescent microscopy is performed as described before (Kukulski et al., 2012).
 
 ## Low/Medium magnification EM
 
-1.  Stain Grids with Reynold's lead citrate to enhance contrast.
+1. Stain Grids with Reynold's lead citrate to enhance contrast.
 
     a.  Place a piece of parafilm in a Petri dish.
 
@@ -28,13 +28,15 @@ Fluorescent microscopy is performed as described before (Kukulski et al., 2012).
 
     f.  Wash the grids on water droplets, blot with filter paper and let dry.
 
-2.  Insert the grid in the microscope, start SerialEM, open a new Navigator file. It is preferable to have at least SerialEM 3.6, but 3.7 is much better.
+2. Insert the grid in the microscope, start SerialEM, open a new Navigator file. It is preferable to have at least SerialEM 3.6, but 3.7 is much better.
 
-3.  Identify the grid squares imaged by fluorescence microscopy before and add their centers positions as Navigator items. One can do this by setting up a full grid map and clicking the centers of the squares on this map or by finding the square centers on the fluoscreen by moving the stage and adding stage positions as Navigator points.
+3. Identify the grid squares imaged by fluorescence microscopy. Add their centers positions as Navigator items. You can do this by setting up a full grid map and clicking the centers of the squares on this map or by finding the square centers on the fluoscreen by moving the stage and adding stage positions as Navigator points.
 
-4.  Choose the magnification for square mapping. Insert and align objective aperture if necessary. We usually use the lowest magnification in the 'M' mode on the FEI microscopes. The pixel size is 2-5 nm. Maps acquired at chosen magnification should be suitable to use for the 'Realign to Item' procedure in SerialEM (if you plan to image these regions again at higher magnification).
+4. Choose the magnification for square mapping. Insert and align objective aperture if necessary. We usually use the lowest magnification in the 'M' mode on the FEI microscopes. The pixel size should be around 4 nm, adjust it depending on how big the montage you can tolerate and how many details you want to see already in the montage. 
 
-5.  Setup a montage acquisition at the center of each square of interest. For a 4000x4000 camera it takes 6x6 montage to image a whole square of the 200 mesh grid with the pixel size around 5 nm. Preferably, no cells should be missing from the map and the edges of the grid square should be visible. A montage is saved as a separate **.mrc** stack for each square. Name them in the same way with letters (root name) followed by a square number. Example: sq1.mrc, sq2.mrc, sq3.mrc etc. Select an option to save an **.mdoc** file with metadata.
+5. If you plan to do the protocol completely and image individual cells at higer magnification after determining their barcode, make sure that a montage acquired at your chosen magnification is suitable for 'Realign to Item' procedure. For this add point in the middle of a cell, switch to the desired higher magnification and run 'Realign to Item'. Fot this to work, SerialEM calibrations need to be done correctly after it was installed.
+
+6. Setup a montage acquisition at the center of each square of interest. For a 4000x4000 camera it takes 6x6 montage to image a whole square of the 200 mesh grid with the pixel size around 5 nm. Preferably, no cells should be missing from the map and the edges of the grid square should be visible. A montage is saved as a separate `.mrc` stack for each square. Name them in the same way with letters (root name) followed by a square number. Example: `sq1.mrc`,  `sq2.mrc`, `sq3.mrc` _etc_. Select an option to save an `.mdoc` file with metadata.
 
 ## Map processing, correlation, and barcode determination: software manual
 
@@ -42,41 +44,58 @@ The processing step aims to find cell cross-sections on the medium magnification
 
 ### Overview
 
-The pipeline is operated through Matlab. Along with Matlab image processing and statistics toolbox commands, external software like IMOD and ilastik is called by Matlab scripts. The data for each EM grid is kept in a separate directory. This is a working directory where all the commands are executed.
+The pipeline is operated through Matlab. On the top level there is a GUI which calls `muclem_` functions stored in the `./functions` folder. Some of these functions also call external programs like IMOD and _ilastik_. If GUI doesn't work, functions can be called directly from the command line or organized in a script.
 
-The workflow is separated in four conceptual stages: Data Preparation, Analysis, Evaluation and Quality control, and Coordinate export to EM. In the GUI, this is reflected by the four separate panels in the 'Pipeline' tab. Each panel contains buttons to execute individual scripts. Additional settings for each step are set up using the 'Settings' tab.
+The data for each EM grid is kept in a separate directory. This is a working directory where all the commands are executed.
 
-At the Data Preparation stage, the images for each grid square are processed separately. Montages, .mdoc files and LM data for each square are automatically copied to a separate directory within the working directory. Then IMOD is used to blend the montages and convert files from .mrc to .tif. Small portions of each montage are cut out to manually train ilastik software to segment out cell cross-sections. Then ilastik is run in headless mode to segment the complete montages. The output from ilastik segmentation is further processed in Matlab to locate individual cells, save their centers and outlines. At his point already, the centers can be imported back to the Navigator file if all cells are to be imaged in higher magnification independent of their barcodes. To determine the cell barcodes EM and LM data need to be correlated because the LM signal is too variable for the segmentation of individual cells. The correlation is performed using Matlab control point selection tool. LM data is transformed to the size of EM data and the cell outlines determined from the segmented montage are later used as masks to measure fluorescence signal of yeast cell walls.
+The workflow is separated in four stages: Data Preparation, Analysis, Evaluation and Quality control, and Coordinate export to EM. In the GUI, this is reflected by the four separate panels in the 'Pipeline' tab. Each panel contains buttons to execute individual scripts. Additional settings for each step are set up using the 'Settings' tab.
 
-The Analysis stage is performed simultaneously for a group of grid squares specified by a list. Using the fluorescence signal in each channel, cells are automatically classified by their barcodes. The result of the classification is written to the file called ID Table. To simplify the evaluation stage and make subsequent analysis more flexible, the images of individual cells are cropped out from large micrographs and stored in a separate folder.
+At the **Data Preparation stage**, the images for each grid square are processed separately. Montages, `.mdoc` files and LM data for each square are automatically copied to a separate directory within the working directory. Then IMOD is used to blend the montages and convert files from `.mrc` to `.tif`. Small portions of each montage are cut out to manually train ilastik software to segment out cell cross-sections. Then _ilastik_ is run in headless mode to segment the complete montages. The output from ilastik segmentation is further processed in Matlab to locate individual cells, save their centers and outlines. At his point already, the centers can be imported back to the Navigator file if all cells are to be imaged in higher magnification independent of their barcodes. To determine the cell barcodes EM and LM data need to be correlated because the LM signal is too variable for the segmentation of individual cells. The correlation is performed using Matlab control point selection tool. LM data is transformed to the size of EM data and the cell outlines determined from the segmented montage are later used as masks to measure fluorescence signal of yeast cell walls.
 
-The Evaluation and Quality control stage has two steps. First, a small number of cells with each barcode are displayed and the user needs to assign which channels have signal and which don't for each label. This is done manually to better assess the quality of the classification. On the second step the dataset is sorted by barcode and the user can browse through the cell images and exclude cells with bad fluorescence signal or sample quality and correct wrongly assigned barcodes. The result of this evaluation is written to the file called Database Table (DB Table).
+The **Analysis** stage is performed simultaneously for a group of grid squares specified by a list. Using the fluorescence signal in each channel, cells are automatically classified by their barcodes. The result of the classification is written to the file called ID Table. To simplify the evaluation stage and make subsequent analysis more flexible, the images of individual cells are cropped out from large micrographs and stored in a separate folder.
+
+The **Evaluation and Quality** control stage has two steps. First, a small number of cells with each barcode are displayed and the user needs to assign which channels have signal and which don't for each label. This is done manually to better assess the quality of the classification. On the second step the dataset is sorted by barcode and the user can browse through the cell images and exclude cells with bad fluorescence signal or sample quality and correct wrongly assigned barcodes. The result of this evaluation is written to the file called Database Table (DB Table).
 
 Finally, coordinates of cells can be imported to the navigator file for high magnification imaging using EM. Previously generated DB Table can be used to add only selected cells.
 
-### Installation and compatibility
+### Installation
 
-Matlab \>8.5 with the Image processing toolbox is required. Additional software: IMOD package and Ilastik.
+To run the scripts, you will need Matlab (we worked with versions starting R2016b and did not test backward and forward compatibility) with the Image processing and Statistics toolboxes, IMOD package for EM data processing and _ilastik_ segmentation software. Everything can run on Windows, Mac, and Linux.
 
-Install IMOD according to the instructions depending on your operating system. Use Cygwin for installing on Windows. IMOD paths should be visible to Matlab (they might not be visible on Mac when MatLab is launched by clicking the icon; we never encountered this problem if MatLab is launched from the command line). To make sure Matlab can call IMOD commands and see IMOD paths, run some IMOD command through Matlab command line using system(), for example system('mrc2tif') or check if IMOD environmental variables are setup (run system('echo \$IMOD\_DIR') on Unix).
+Install IMOD according to the instructions depending on your operating system. Use Cygwin for installing on Windows (https://bio3d.colorado.edu/imod/download.html). 
 
-Install Ilastik according to the manual ([www.ilastik.org](http://www.ilastik.org)). When you start the MultiCLEM GUI provide the path to ilastik folder (containing run scripts for different operating systems) in the 'Settings' tab of the GUI. On Mac this is something like /Applications/ilastik-1.3.2rc2-OSX.app/Contents/ilastik-release. On Linux it is just the folder which you download from the website.
+IMOD paths should be visible to Matlab. We noticed that on Mac they might not be visible when MatLab is launched by clicking the icon; we never encountered this problem if MatLab is launched from the command line. To make sure Matlab can call IMOD commands and see IMOD paths, run some IMOD command through Matlab command line using system(), for example `system('mrc2tif')` or check if IMOD environmental variables are setup (run `system('echo $IMOD_DIR')` on Unix). If Matlab can't see IMOD try launching Matlab from the command line.
 
-Add directory containing the scripts to the Matlab path. To use the GUI, install it like a Matlab App.
+Install Ilastik according to the manual ([www.ilastik.org](http://www.ilastik.org)). When you start the MultiCLEM GUI provide the path to ilastik folder (containing run scripts for different operating systems) in the 'Settings' tab of the GUI. On Mac this is something like `/Applications/ilastik-1.3.2rc2-OSX.app/Contents/ilastik-release/`. On Linux it is just the folder which you download from their website that contains `run_ilastik.sh`.
+
+To run the GUI:
+
+1. Add directory containing the scripts to the Matlab path by typing this in Matlab command line: `addpath('path-to-MultiCLEM-scripts/functions')`. 
+2. Launch `MultiCLEM_analyzer.mlapp` by typing `'path-to-MultiCLEM-scripts/MultiCLEM_analyzer.mlapp'`
+
+Or
+
+Install the app from `path-to-MultiCLEM-scripts/mlpkg`. In this case all functions will be copied to the matlab home directory and an icon of the app will appear among your other matlab apps. The app will use the copy of the scripts stored in the home directory, in case you want to modify them.
 
 ### Initial data organization and setup
 
-The scripts deal with the data from a several grid squares of one EM grid. The data from one grid should be put in a separate directory and named in a systematic way. Grid square maps in mrc format should be named square\_rootN.mrc, where square\_root is some letter combination (like sq, mm etc), and N is the square number. SeriaEM automatically names .mdoc files as square\_rootN.mrc.mdoc. The light microscopy data should be organized as one tiff stack (slices are channels) per one grid square and named systematically using a different root name (like 'lm' or 'fm').
+All the data from one grid should be put in a separate directory and named in a systematic way. Grid square maps in mrc format should be named `square_rootN.mrc`, where square\_root is some letter combination (like sq, mm etc), and N is the square number. SeriaEM automatically names .mdoc files as `square_rootN.mrc.mdoc`.  Do not rename the files at later points. The light microscopy data should be organized as one tiff stack (slices are channels) per one grid square and named systematically using a different root name (like 'lm' or 'fm'). An example of initial folder set up for a grid with 7 squares imaged:
 
-In the 'Settings' tab the path to the working directory ('Grid dir') and root names for light and electron micrographs should be provided. **Almost all** **additional files and folders created during processing are named automatically and the names cannot be changed.** Only three output files (ID table, DB table, and output navigator) are named by user, see below for details. Files related to individual squares are stored in the square directories (named sq1,sq2,etc). Files related to the whole dataset are saved in the working directory. All generated files are listed in the descriptions of individual steps below.
+![1_folder_initial](/Users/yuryb/Box/writing/papers/htp_clem/scripts/docs/figs/1_folder_initial.png)
 
-### Panel 1 -- Data preparation
+In the 'Settings' tab the path to the working directory ('Grid dir') and root names for light and electron micrographs should be provided. **Almost all** **additional files and folders created during processing are named automatically and the names cannot be changed.** Only three output files (ID table, DB table, and output navigator) are named by user, see below for details. Files related to individual squares are stored in the square directories (named `sq1`, `sq2`, etc). Files related to the whole dataset are saved in the working directory. All generated files are listed in the descriptions of individual steps below.
+
+
+
+### Panel 1. Data preparation
 
 At this stage squares are processed by each script sequentially or individually. For sequential processing enter the last square number in the field 'Number of squares'. The action will be performed starting with square 1 and ending with the square with the specified number. For individual processing tick the box 'Run only current square'. In this case the action will be performed on the square with the number entered in the box.
 
 The scripts can be added to autorun sequence by ticking boxes to the right of each run button. Hitting the autorun button is equivalent to sequentially hitting the run buttons of individual ticked steps.
 
 The path to working directory should be pasted in the field 'Grid dir' in the 'Settings' tab.
+
+
 
 #### Step 1. Montage blending
 
@@ -96,25 +115,27 @@ Arguments:
 
 The script creates a processing directory for each grid square and sorts .mrc and .mdoc files into these directories. Fluorescent micrographs are sorted if 'Sort LM' is ticked. Sometimes this is necessary if LM data is copied to the grid directories manually from another source.
 
-In each directory Matlab calls IMOD commands extractpieces, blendmont and mrc2tif. Additional (to input/output files and names) options for blendmont are hard-coded and are the following:
+In each directory Matlab calls IMOD commands _extractpieces_, _blendmont_ and _mrc2tif_. Additional (to input/output files and names) options for blendmont are hard-coded and are the following:
 
--v (VerySloppyMontage -- when opening the maps in SerialEM, in the Montage control panel select option 'Treat as a very sloppy montage' so that the map looks more like the blended version)
+**-v** (VerySloppyMontage -- when opening the maps in SerialEM, in the Montage control panel select option 'Treat as a very sloppy montage' so that the map looks more like the blended version)
 
--ori (AdjustOrigin, we use it because it is used when blending using etomo GUI)
+**-ori** (AdjustOrigin, we use it because it is used when blending using etomo GUI)
 
--robust 1.0 (Ignore the outliers to get better blending of the pieces where the grid bars ruin the correlation)
+**-robust 1.0** (Ignore the outliers to get better blending of the pieces where the grid bars ruin the correlation)
 
 These options provide the best blending of medium magnification montages of complete grid square maps with yeast sections. For other types of samples or different magnifications these parameters might need adjustment.
 
-Generated files (for grid square number 1) in the square folder:
+**Generated files** (for grid square number 1) in the square folder:
 
-sq1.pl, sq.1ecd, sq1.xef, sq1.yef -- technical files for blending
+​	`sq1.pl`, `sq1.ecd`, `sq1.xef`, `sq1.yef` - technical files for blending
 
-sq1\_autoblend.mrc -- blended montage in mrc format (full size)
+​	`sq1_autoblend.mrc` - blended montage in mrc format (full size)
 
-sq1.tif -- blended montage converted to tif (full size)
+​	`sq1.tif` - blended montage converted to tif (full size)
 
-sq1\_stack.tif -- individual montage tiles converted to tif in one stack
+​	`sq1_stack.tif` - individual montage tiles converted to tif in one stack
+
+
 
 #### Step 2. Make pieces for training ilastik
 
@@ -136,17 +157,17 @@ Arguments:
 
 The script crops five small images from each square montage and saves them in separate folders, so that ilastik project can be created for each individual square and the ilastik software can be trained by user using these small images and not the fullsize montage which is difficult to handle in the ilastik GUI.
 
-Four of the five saved images are cropped at the positions determined by the tlX and tlY parameters entered in the 'Settings' tab in Panel 2. These are coordinates of the top left corner of the first (top left) image. The next three images are cut to the right and to the bottom from it. The fifth image is always cut in the center of the square because sometimes the image intensity has gradients across the montage causing bad segmentation. The size of the images is specified by the cutsize parameter entered in the same panel. If the 'Interactive cut' checkbox next to the run button is ticked, positions of the first four images to be cut from each square montage will be shown to the user. The user needs to correct the position of the images to make sure that the images contain: a piece of the grid bar, good well preserved cells, holes in the resin, resin itself. If the box is not ticked, the images are cropped at the same coordinates for all squares. The script uses IMOD command trimvol to cut pieces from the original.
+Four of the five saved images are cropped at the positions determined by the `tlX` and `tlY` parameters entered in the 'Settings' tab in Panel 2. These are coordinates of the top left corner of the first (top left) image. The next three images are cut to the right and to the bottom from it. The fifth image is always cut in the center of the square because sometimes the image intensity has gradients across the montage causing bad segmentation. The size of the images is specified by the `cutsize` parameter entered in the same panel. If the `Interactive cut` checkbox next to the run button is ticked, positions of the first four images to be cut from each square montage will be shown to the user. The user needs to correct the position of the images to make sure that the images contain: a piece of the grid bar, good well preserved cells, holes in the resin, resin itself. If the box is not ticked, the images are cropped at the same coordinates for all squares. The script uses IMOD command _trimvol_ to cut pieces from the original.
 
-Files and folders generated in the working directory (for square 1):
+**Files and folders** generated in the working directory (for square 1):
 
-4ilastik\_sq1/sq1\_tile1.tif
+​	`4ilastik_sq1/sq1_tile1.tif`
 
-4ilastik\_sq1/sq1\_tile2.tif
+​	`4ilastik_sq1/sq1_tile2.tif`
 
-4ilastik\_sq1/sq1\_tile3.tif
+​	`4ilastik_sq1/sq1_tile3.tif`
 
-4ilastik\_sq1/sq1\_tile4.tif
+​	`4ilastik_sq1/sq1_tile4.tif`
 
 4ilastik\_sq1/sq1\_tile5.tif
 
