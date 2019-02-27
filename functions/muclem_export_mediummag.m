@@ -1,27 +1,27 @@
-%function out = muclem_export_mediummag(DBtablepath, chlist, work_dir,...
-%    sr, cz_micron, rd, EMscale, mrc_root, included, approved)
+function out = muclem_export_mediummag(DBtablepath, chlist, work_dir,...
+    cz_micron, rd, EMscale, mrc_root, included, approved)
 % Crops separate cell images out of original data and puts in one folder in
 % the original size.
 % Substracts background in LM data using function for 12-bit data in the range of
 % 0-4095.
 
 %test setings
-work_dir = '/Users/yuryb/Documents/phd/test';
-DBtablepath = '/Users/yuryb/Documents/phd/test/DBtable1.txt';
-EMscale=0.25;
-chlist = [2];
-mrc_root = 'mm';
-cz_micron = 6; % side of the cropped image in microns
-sr=2.5; % structured element size for background subtraction, micron
-rd = 1; % How much to resize the images compared to the original EM resolution (1)
-included = 0;
-approved = 0;
+%work_dir = '/Users/yuryb/Documents/phd/test';
+%DBtablepath = '/Users/yuryb/Documents/phd/test/DBtable1.txt';
+%EMscale=0.25;
+%chlist = [2];
+%mrc_root = 'mm';
+%cz_micron = 6; % side of the cropped image in microns
+%sr=2.5; % structured element size for background subtraction, micron
+%rd = 1; % How much to resize the images compared to the original EM resolution (1)
+%included = 0;
+%approved = 0;
 
 %% Hardcoded parameters and names
 
-subtractbg = 1;
-showim = 0;
-Keytablename = 'Keytable1.txt';
+%subtractbg = 1;
+%showim = 0;
+%Keytablename = 'Keytable1.txt';
 sq_root = 'sq';
 
 % See if need to crop LM
@@ -72,7 +72,7 @@ end
 sel_idx = logical(sel_idx);
 
 totcells = sum(sel_idx); % total number of cells
-sel_sqlist = unique(DBtable(sel_idx, 1)); % list of selected squares
+sel_sqlist = unique(DBtable(sel_idx, 1))'; % list of selected squares
 nsq_sel = size(sel_sqlist,2); % number of squares
 sel_labels = unique(DBtable_ml(:,4)); % list of all labels 
 
