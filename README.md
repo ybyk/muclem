@@ -5,7 +5,7 @@ This repository contains MatLab scripts neccessary for performing image processi
 **Multiplexed electron microscopy by fluorescent barcoding allows
 screening for ultrastructural phenotype** by Yury S. Bykov, Nir Cohen _et al_.
 
-![workflow](/Users/yuryb/Documents/work/muclem/docs/figs/workflow.png)
+![workflow](./docs/figs/workflow.png)
 
 To start, copy the repository to a folder on your computer and refer to documentation ( `./docs` folder) for further instructions.
 
