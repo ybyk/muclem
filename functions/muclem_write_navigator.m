@@ -501,14 +501,16 @@ else
     if exist(DBnamefull, 'file')==0&&(Appr||Incl) % If checkboxes selected but DB not found
         disp('DB table not found! Adding all cells from selected squares')
     end
+    
     % If nothing is selected, DB file is irrelevant
     slist_fin = newsqlist;
     disp('Neither of ''Approved'' or ''Included'' checkboxes is selected, so the DB Table will not be used. All cells from selected squares will be added');
-    tempt = dlmread([work_dir, filesep, sq_root, num2str(slist_fin(n)), filesep, sq_root,...
-        num2str(slist_fin(n)), '_Montage_centroids.txt']);
-    ncells = size(tempt,1);
-    SV{n} = ones([ncells 1]);
-    
+    for n=1:nsq
+        tempt = dlmread([work_dir, filesep, sq_root, num2str(slist_fin(n)), filesep, sq_root,...
+            num2str(slist_fin(n)), '_Montage_centroids.txt']);
+        ncells = size(tempt,1);
+        SV{n} = ones([ncells 1]);
+    end
 end
 
 %% Add points to the navigator

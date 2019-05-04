@@ -37,7 +37,7 @@ function out = muclem_prep_view(chlist, work_dir, sr, panel_size, EMscale, mrc_r
 cz_micron = 6; % side of the cropped image in microns 
 subtractbg = 1;
 showim = 0;
-outfolder = [work_dir, filesep, '/browser_imgs/'];
+outfolder = [work_dir, filesep, 'browser_imgs'];
 sq_root = 'sq';
 
 %% Check which squares are there
