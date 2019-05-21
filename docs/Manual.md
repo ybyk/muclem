@@ -84,7 +84,7 @@ Before starting copy the data for each EM grid in a separate directory. This is 
 
 The workflow is separated in four stages: Data Preparation, Analysis, Evaluation and Quality control, and Coordinate export to EM. In the GUI, this is reflected by the four separate panels in the 'Pipeline' tab. Each panel contains buttons to execute individual scripts. Additional settings for each step are set up using the 'Settings' tab.
 
-![2_Run_tab](/Users/yuryb/Documents/work/muclem/docs/figs/2_Run_tab.png)
+![2_Run_tab](./figs/2_Run_tab.png)
 
 At the **Data Preparation stage**, the images for each grid square are processed separately. Montages, `.mdoc` files and LM data for each square are automatically copied to a separate directory within the working directory. Then IMOD is used to blend the montages and convert files from `.mrc` to `.tif`. Small portions of each montage are cut out to manually train ilastik software to segment out cell cross-sections. Then _ilastik_ is run in headless mode to segment the complete montages. The output from ilastik segmentation is further processed in Matlab to locate individual cells, save their centers and outlines. At his point already, the centers can be imported back to the Navigator file if all cells are to be imaged in higher magnification independent of their barcodes. To determine the cell barcodes EM and LM data need to be correlated because the LM signal is too variable for the segmentation of individual cells. The correlation is performed using Matlab control point selection tool. LM data is transformed to the size of EM data and the cell outlines determined from the segmented montage are later used as masks to measure fluorescence signal of yeast cell walls.
 
@@ -133,7 +133,7 @@ Install the app from `path-to-MultiCLEM-scripts/mlpkg`. In this case all functio
 
 All the data from one EM grid should be put in a separate directory and named in a systematic way. Grid square maps in mrc format should be named `square_rootN.mrc`, where square\_root is some letter combination (like sq, mm etc), and N is the square number without zero padding (1,2,3.. not 01,02,03). Make sure that SeriaEM automatically names .mdoc files as `square_rootN.mrc.mdoc` in the required way.  Do not rename the files at later points. The light microscopy data should be organized as one tiff stack (slices are channels) per one grid square and named systematically using a different root name (like 'lm' or 'fm'). An example of initial folder set up for a grid with 7 squares imaged:
 
-![1_folder_initial](/Users/yuryb/Documents/work/muclem/docs/figs/1_folder_initial.png)
+![1_folder_initial](./figs/1_folder_initial.png)
 
 In the 'Settings' tab the path to the working directory ('Grid dir') and root names for light and electron micrographs should be provided. **Almost all** **additional files and folders created during processing are named automatically and the names cannot be changed.** Only three output files (ID table, DB table, and output navigator) are named by user, see below for details. Files related to individual squares are stored in the square directories (named `sq1`, `sq2`, etc). Files related to the whole dataset are saved in the working directory. All generated files are listed in the descriptions of individual steps below.
 

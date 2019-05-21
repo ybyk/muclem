@@ -41,6 +41,7 @@ function out = muclem_read_barcode(slist, chlist, nclusters, work_dir, ...
 
 % hardcoded
 sq_root = 'sq';
+devmode = 0; % if 1 do not load all the LM data and measure intensities but load already measured intensities
 % Read pixel size from mdoc
 sq_path = sprintf('%s%s%s%d', work_dir, filesep, sq_root,slist(1));
 mdoc_file_name_new = sprintf('%s%s%s%d%s', sq_path, filesep, mrc_root, slist(1), '.mrc.mdoc');
@@ -126,38 +127,39 @@ allLM = cell([nsq 1]); %Cell array of 3d arrays (stores LM data)
 allCt = cell([nsq 1]); %Cell array of 2d arrays (
 disp('Loading data...')
 % Go square by square
-for n=1:nsq
-    %Masks
-    load(masksnames{n});
-    allCW{n} = sel_idx;
-
-    %LM
-    lm_tf = []; % Make one square
-    for c=1:nch
-        if subtractbg==1
-            I = imread(lmnames{n,c});
-            lm_tf(:,:,c) = I - imopen(I, strel('disk', r1_pix));
-            if showim==1&&n==1
-                imtool([I, lm_tf(:,:,c)]);
+if devmode==0
+    for n=1:nsq
+        %Masks
+        load(masksnames{n});
+        allCW{n} = sel_idx;
+        
+        %LM
+        lm_tf = []; % Make one square
+        for c=1:nch
+            if subtractbg==1
+                I = imread(lmnames{n,c});
+                lm_tf(:,:,c) = I - imopen(I, strel('disk', r1_pix));
+                if showim==1&&n==1
+                    imtool([I, lm_tf(:,:,c)]);
+                end
+            else
+                lm_tf(:,:,c) = imread(lmnames{n,c});
             end
-        else
-            lm_tf(:,:,c) = imread(lmnames{n,c});  
         end
+        allLM{n} = lm_tf; % write to cell array
+        
+        % Centroids
+        allCt{n} = dlmread(centroidsnames{n});
+        
+        disp([num2str(n), ' :loaded square ', num2str(slist(n))])
     end
-    allLM{n} = lm_tf; % write to cell array
-    
-    % Centroids
-    allCt{n} = dlmread(centroidsnames{n}); 
-    
-    disp([num2str(n), ' :loaded square ', num2str(slist(n))])
 end
-
 disp('That''s it with loading.')
 %% Measure and classify
 
     disp('Simple median mode! Measuring')
     allp_allc = cell([nsq 1]); % will put allmeasurements there
-    
+ if devmode==0   
     for n=1:nsq % For each square
         disp(['Statring square ', num2str(slist(n))])
         %extract things from cell arrays
@@ -184,6 +186,14 @@ disp('That''s it with loading.')
         allp_allc{n} =  allcells;
         dlmwrite(cellintnames{n}, allcells);
     end
+    
+ elseif devmode==1
+     % Read existing measurememnts
+     for n=1:nsq 
+        allp_allc{n} =  dlmread(cellintnames{n});
+     end
+ end
+     
     disp('Measurement done')
     
     % Classification
@@ -210,20 +220,28 @@ disp('That''s it with loading.')
         
     end
     
+    % Correct  bleedthrough (just test)
+    %normcells(:,2) = normcells(:,2) - 0.25.*normcells(:,1);
+    
+    
     % Do kmeans
     clabels = kmeans(normcells, nclusters, 'Replicates', 50);
     
     % measure mean for each cluster
     what2do = normcells; % which array to measure
-    msrmt = zeros([nclusters nch]); %
+    msrmt = zeros([nclusters nch]); % array to store mean values for each cluster
+    msrmt_sd = zeros([nclusters nch]); % array to store variance (std deviation)
     % measure
     for k=1:nclusters
         for c=1:nch
             
             msrmt(k,c) = median(what2do(clabels==k,c));
+            msrmt_sd(k,c) = std(what2do(clabels==k,c));
         end
     end
-    msrmt_sum = [sum(msrmt, 2) msrmt (1:nclusters)']; % 1 - sum of all int for eack cluster, 2:nch+1 - measurements, endcol = initial N
+    msrmt_sum = [sum(msrmt, 2) msrmt  msrmt_sd (1:nclusters)']; % 1 - sum of ...
+    % 1:all int for each cluster, 2:nch+1 - measurements, nch+2:2nch+2 = SD
+    % for each chennel, last col: initial cluster number
     msrmt_s = sortrows(msrmt_sum, [1 2:(nch+1)]); % sort by total intensity followed by individual channels if needed
     
     % plot
@@ -232,9 +250,11 @@ disp('That''s it with loading.')
     for k=1:nclusters
         subplot(pc,pc,k)
         bar(msrmt_s(k,2:(nch+1)));
-        %ylim([0 1.05]);
-        Ns = sum(clabels==msrmt_s(k,(nch+2)));
-        title(['Label ', num2str(msrmt_s(k,(nch+2))), ', N=', num2str(Ns)])
+        hold on
+        errorbar(msrmt_s(k,2:(nch+1)), msrmt_s(k,(nch+2):(2*nch+1)), '.');
+        ylim([0 1.05]);
+        Ns = sum(clabels==msrmt_s(k,(2*nch+2)));
+        title(['Label ', num2str(msrmt_s(k,(2*nch+2))), ', N=', num2str(Ns)])
     end
     
     %Construct the same array as patch-measurement result columns: 1-sq, 2-cell, 3-label
